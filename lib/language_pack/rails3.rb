@@ -6,9 +6,10 @@ class LanguagePack::Rails3 < LanguagePack::Rails2
   # detects if this is a Rails 3.x app
   # @return [Boolean] true if it's a Rails 3.x app
   def self.use?
-    super &&
-      File.exists?("config/application.rb") &&
-      File.read("config/application.rb") =~ /Rails::Application/
+    if gemfile_lock?
+      rails_version = LanguagePack::Ruby.gem_version('railties')
+      rails_version >= Gem::Version.new('3.0.0') && rails_version < Gem::Version.new('4.0.0') if rails_version
+    end
   end
 
   def name
@@ -56,9 +57,7 @@ private
           if $?.success?
             log "assets_precompile", :status => "success"
             puts "Asset precompilation completed (#{"%.2f" % time}s)"
-            puts "Caching assets"
-            cache_store "app/assets"
-            cache_store "public/assets"
+            cache_assets
           else
             log "assets_precompile", :status => "failure"
             puts "Precompiling assets failed, enabling runtime asset compilation"
@@ -89,10 +88,48 @@ private
     end
   end
 
-  # have the assets changed since we last pre-compiled them?
+  # Stash uncompiled assets away, so we can run a diff against them the next time we deploy
+  # Also write our configuration hash to 'public/assets/.version' for comparison on next deploy
+  def cache_assets
+    puts "Caching assets"
+    write_asset_configuration_version
+    ["public/assets", * uncompiled_cache_directories].each { |directory| 
+      puts "===> caching: #{directory}"
+      cache_store(directory) 
+    }
+  end
+
+  # Have the assets changed since we last pre-compiled them?
   def precompiled_assets_are_cached?
-    %w(app/assets vendor/assets).any? do |directory|
-      run("diff #{directory} #{cache_base + directory} --recursive").split("\n").length.zero?
-    end
+    puts "===> cache_base: #{cache_base}"
+    File.exist?("#{cache_base}/public/assets/.version") &&
+    File.read("#{cache_base}/public/assets/.version") == asset_configuration_hash &&
+    uncompiled_cache_directories.all? { |directory| 
+      puts "===> diff #{directory} #{cache_base + directory} --recursive" 
+      run("diff #{directory} #{cache_base + directory} --recursive").split("\n").length.zero? 
+    }
+  end
+
+  # The app may change the sprocket configuration from time to time.
+  # For example, another file may need to be precompiled,
+  # or another folder may be added to the asset path.
+  def asset_configuration_hash
+    # Find all non-cached, non-vendored references to 'config.assets',
+    # strip whitespace, and turn into a hash
+    @asset_configuration_hash ||= run("grep -r 'config.assets' . | grep -v './#{cache_base}' | grep -v './tmp' | grep -v './vendor' | sed -e 's/ *//g;' | shasum")[0...-2].strip
+  end
+
+  # These are the directories we run a diff against to determine whether to re-compile our assets.
+  # If any lines in any files in any of these directories change, we will re-compile.
+  # Gemfile.lock is included to try to catch any changes in bundled assets
+  def uncompiled_cache_directories
+    @uncompiled_cache_directories ||= [
+      'Gemfile.lock',
+      * Dir['**/*.{js*,coffee,css*,gif,jpg,jpeg,png,sass,scss}'].map { |file| File.dirname(file) }.uniq
+    ]
+  end
+
+  def write_asset_configuration_version
+    File.open("public/assets/.version", "w+") { |file| file.write(asset_configuration_hash) }
   end
 end
