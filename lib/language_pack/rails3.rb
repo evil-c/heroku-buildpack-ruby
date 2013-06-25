@@ -130,6 +130,6 @@ private
   end
 
   def write_asset_configuration_version
-    File.open("public/assets/.version", "w+") { |file| file.write(asset_configuration_hash) }
+    File.open("#{cache_base}/public/assets/.version", "w+") { |file| file.write(asset_configuration_hash) }
   end
 end
