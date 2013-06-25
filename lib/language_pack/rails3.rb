@@ -130,6 +130,13 @@ private
   end
 
   def write_asset_configuration_version
-    File.open("#{cache_base}/public/assets/.version", "w+") { |file| file.write(asset_configuration_hash) }
+    begin
+      File.open("#{cache_base}/public/assets/.version", "w+") { |file| file.write(asset_configuration_hash) }
+      puts "===> did we record the version? #{File.exists?("#{cache_base}/public/assets/.version")}"
+    rescue Exception => e
+      puts "===> BORK <==="
+      puts e.message
+      puts e.backtrace.join("\n")
+    end
   end
 end
