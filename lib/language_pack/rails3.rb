@@ -93,14 +93,21 @@ private
   def cache_assets
     puts "Caching assets"
     write_asset_configuration_version
-    ["public/assets", * uncompiled_cache_directories].each { |directory| cache_store(directory) }
+    ["public/assets", * uncompiled_cache_directories].each { |directory| 
+      puts "===> caching: #{directory}"
+      cache_store(directory) 
+    }
   end
 
   # Have the assets changed since we last pre-compiled them?
   def precompiled_assets_are_cached?
+    puts "===> cache_base: #{cache_base}"
     File.exist?("#{cache_base}/public/assets/.version") &&
     File.read("#{cache_base}/public/assets/.version") == asset_configuration_hash &&
-    uncompiled_cache_directories.all? { |directory| run("diff #{directory} #{cache_base + directory} --recursive").split("\n").length.zero? }
+    uncompiled_cache_directories.all? { |directory| 
+      puts "===> diff #{directory} #{cache_base + directory} --recursive" 
+      run("diff #{directory} #{cache_base + directory} --recursive").split("\n").length.zero? 
+    }
   end
 
   # The app may change the sprocket configuration from time to time.
