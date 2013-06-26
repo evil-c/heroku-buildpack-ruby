@@ -29,10 +29,6 @@ class LanguagePack::Rails3 < LanguagePack::Rails2
   end
 
 private
-  
-  def cache_base
-    Pathname.new('/tmp/cache/repo')
-  end
 
   def plugins
     super.concat(%w( rails3_serve_static_assets )).uniq
@@ -136,6 +132,7 @@ private
 
   def write_asset_configuration_version
     begin
+      FileUtils.mkdir_p("#{cache_base}/public/assets/") unless Dir.exist? "#{cache_base}/public/assets/"
       File.open("#{cache_base}/public/assets/.version", "w+") { |file| file.write(asset_configuration_hash) }
       puts "===> .version file <==="
       puts run("cat #{cache_base}/public/assets/.version")
