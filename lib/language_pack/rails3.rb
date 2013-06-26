@@ -31,7 +31,7 @@ class LanguagePack::Rails3 < LanguagePack::Rails2
 private
   
   def cache_base
-    '/app/tmp/cache/repo/'
+    '/app/tmp/repo'
   end
 
   def plugins
