@@ -102,7 +102,8 @@ private
   # Have the assets changed since we last pre-compiled them?
   def precompiled_assets_are_cached?
     puts "===> cache_base: #{cache_base}"
-    File.exist?("#{cache_base}/public/assets/.version") &&
+    puts "===> File.exist?(#{cache_base}/public/assets/.version): #{File.exist?("#{cache_base}/public/assets/.version")}"
+    File.exist?("#{cache_base}/public/assets/.version")  &&
     File.read("#{cache_base}/public/assets/.version") == asset_configuration_hash &&
     uncompiled_cache_directories.all? { |directory| 
       puts "===> diff #{directory} #{cache_base + directory} --recursive" 
@@ -132,7 +133,8 @@ private
   def write_asset_configuration_version
     begin
       File.open("#{cache_base}/public/assets/.version", "w+") { |file| file.write(asset_configuration_hash) }
-      puts "===> did we record the version? #{File.exists?("#{cache_base}/public/assets/.version")}"
+      puts "===> .version file <==="
+      puts run("cat #{File.exists?("#{cache_base}/public/assets/.version")}")
     rescue Exception => e
       puts "===> BORK <==="
       puts e.message
