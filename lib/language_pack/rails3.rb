@@ -31,7 +31,7 @@ class LanguagePack::Rails3 < LanguagePack::Rails2
 private
   
   def cache_base
-    '/app/tmp/repo'
+    Pathname.new('/app/tmp/cache/repo/')
   end
 
   def plugins
