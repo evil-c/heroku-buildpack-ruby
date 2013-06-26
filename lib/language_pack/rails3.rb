@@ -29,6 +29,10 @@ class LanguagePack::Rails3 < LanguagePack::Rails2
   end
 
 private
+  
+  def cache_base
+    '/app/tmp/cache/repo'
+  end
 
   def plugins
     super.concat(%w( rails3_serve_static_assets )).uniq
@@ -134,7 +138,7 @@ private
     begin
       File.open("#{cache_base}/public/assets/.version", "w+") { |file| file.write(asset_configuration_hash) }
       puts "===> .version file <==="
-      puts run("cat #{File.exists?("#{cache_base}/public/assets/.version")}")
+      puts run("cat #{cache_base}/public/assets/.version")
     rescue Exception => e
       puts "===> BORK <==="
       puts e.message
